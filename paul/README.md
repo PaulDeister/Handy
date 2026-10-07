@@ -30,14 +30,15 @@ grants across rebuilds; upstream's ad-hoc signature loses them on every build.
 
 `Handy Local Signing` is a self-signed code-signing certificate in the login keychain. macOS
 lists it as untrusted, which codesign and the permission grants don't need. To create it on
-a new Mac:
+a new Mac (needs OpenSSL 3, `brew install openssl@3`; macOS's built-in LibreSSL lacks `-legacy`):
 
 ```bash
 cd "$(mktemp -d)"
-openssl req -x509 -newkey rsa:2048 -nodes -keyout key.pem -out cert.pem -days 3650 \
+openssl="$(brew --prefix openssl@3)/bin/openssl"
+"$openssl" req -x509 -newkey rsa:2048 -nodes -keyout key.pem -out cert.pem -days 3650 \
   -subj "/CN=Handy Local Signing" -addext "basicConstraints=critical,CA:false" \
   -addext "keyUsage=critical,digitalSignature" -addext "extendedKeyUsage=critical,codeSigning"
-openssl pkcs12 -export -legacy -inkey key.pem -in cert.pem -name "Handy Local Signing" \
+"$openssl" pkcs12 -export -legacy -inkey key.pem -in cert.pem -name "Handy Local Signing" \
   -out handy.p12 -passout pass:temp
 security import handy.p12 -k ~/Library/Keychains/login.keychain-db -P temp -T /usr/bin/codesign
 rm -f key.pem cert.pem handy.p12
