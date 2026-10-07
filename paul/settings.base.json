@@ -10,5 +10,6 @@
   "autostart_enabled": true,
   "start_hidden": true,
   "update_checks_enabled": false,
-  "selected_microphone": "MacBook Pro Microphone"
+  "selected_microphone": "MacBook Pro Microphone",
+  "log_level": "info"
 }
