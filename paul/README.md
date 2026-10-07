@@ -53,6 +53,8 @@ from a command at apply time and is never written to an overlay file. It lands i
 settings store and in the timestamped `settings_store.json.bak-*` backups the script leaves
 beside it.
 
+Handy's default hotkeys, which the scripts leave as they are:
+
 | Hotkey             | Action                                                                                                                          |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
 | Option+Space       | Dictate locally. Hold to talk, or tap to start and tap again to stop.                                                           |

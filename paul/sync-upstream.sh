@@ -17,7 +17,8 @@ fi
 
 git pull --ff-only origin paul
 git fetch upstream --tags --force
-tag="${1:-$(git tag -l 'v*' --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1)}"
+tag="${1:-$(git ls-remote --tags --refs upstream 'v*' | sed 's#.*refs/tags/##' |
+  grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)}"
 if git merge-base --is-ancestor "$tag" HEAD; then
   echo "paul already contains $tag."
   exit 0
