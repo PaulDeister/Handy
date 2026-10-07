@@ -1,0 +1,14 @@
+{
+  "_comment": "Public-safe defaults for Paul's Mac. Private words, prompts and keys go in ~/.config/handy-paul/settings.local.json.",
+  "shortcut_activation": "hold_or_toggle",
+  "paste_method": "ctrl_v",
+  "clipboard_handling": "dont_modify",
+  "auto_submit": false,
+  "append_trailing_space": true,
+  "audio_feedback": true,
+  "history_limit": 50,
+  "autostart_enabled": true,
+  "start_hidden": true,
+  "update_checks_enabled": false,
+  "selected_microphone": "MacBook Pro Microphone"
+}
