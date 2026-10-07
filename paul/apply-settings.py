@@ -35,7 +35,7 @@ SPECIAL = {
 SECRET_KEYS = {"post_process_api_keys", "post_process_api_keys_from_command"}
 
 
-def apply_overlay(settings, overlay, source):
+def apply_overlay(settings, overlay, source, fetch_secrets):
     changed = []
     for key, value in overlay.items():
         if key.startswith("_"):
@@ -59,6 +59,8 @@ def apply_overlay(settings, overlay, source):
         elif key == "post_process_api_keys_from_command":
             keys = settings.setdefault("post_process_api_keys", {})
             for pid, argv in value.items():
+                if not fetch_secrets:
+                    continue
                 argv = [os.path.expanduser(argv[0]), *argv[1:]]
                 out = subprocess.run(argv, capture_output=True, text=True, check=True)
                 keys[pid] = out.stdout.strip()
@@ -75,7 +77,7 @@ def apply_overlay(settings, overlay, source):
 
 
 def handy_running():
-    return subprocess.run(["pgrep", "-x", "Handy"], capture_output=True).returncode == 0
+    return subprocess.run(["pgrep", "-x", "handy"], capture_output=True).returncode == 0
 
 
 def quit_handy():
@@ -98,9 +100,6 @@ def main():
     if not STORE.exists():
         sys.exit(f"{STORE} not found: launch Handy once and finish onboarding first.")
 
-    if not args.dry_run:
-        quit_handy()
-
     store = json.loads(STORE.read_text())
     settings = store["settings"]
     before = json.loads(json.dumps(settings))
@@ -108,7 +107,9 @@ def main():
     changed = []
     for path in (BASE, LOCAL):
         if path.exists():
-            changed += apply_overlay(settings, json.loads(path.read_text()), path)
+            changed += apply_overlay(
+                settings, json.loads(path.read_text()), path, not args.dry_run
+            )
 
     for key in sorted(set(changed) - SPECIAL):
         shown = "[redacted]" if key in SECRET_KEYS else json.dumps(settings[key])[:120]
@@ -118,9 +119,10 @@ def main():
         print(f"{key} applied")
 
     if args.dry_run:
-        print("Dry run: nothing written.")
+        print("Dry run: nothing written; key commands not run.")
         return
 
+    quit_handy()
     stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     shutil.copy2(STORE, STORE.with_name(f"{STORE.name}.bak-{stamp}"))
     tmp = STORE.with_name(f"{STORE.name}.tmp")

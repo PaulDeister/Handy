@@ -24,22 +24,38 @@ directory, so merging an upstream release never conflicts.
 
 ## Signing
 
-`build-install.sh` signs with the first `Apple Development` identity in the keychain, or
+`build-install.sh` signs with the `Handy Local Signing` identity, or
 `HANDY_SIGNING_IDENTITY` if set. A stable identity keeps the Accessibility and Microphone
 grants across rebuilds; upstream's ad-hoc signature loses them on every build.
+
+`Handy Local Signing` is a self-signed code-signing certificate in the login keychain. macOS
+lists it as untrusted, which codesign and the permission grants don't need. To create it on
+a new Mac:
+
+```bash
+cd "$(mktemp -d)"
+openssl req -x509 -newkey rsa:2048 -nodes -keyout key.pem -out cert.pem -days 3650 \
+  -subj "/CN=Handy Local Signing" -addext "basicConstraints=critical,CA:false" \
+  -addext "keyUsage=critical,digitalSignature" -addext "extendedKeyUsage=critical,codeSigning"
+openssl pkcs12 -export -legacy -inkey key.pem -in cert.pem -name "Handy Local Signing" \
+  -out handy.p12 -passout pass:temp
+security import handy.p12 -k ~/Library/Keychains/login.keychain-db -P temp -T /usr/bin/codesign
+rm -f key.pem cert.pem handy.p12
+```
 
 ## Settings
 
 `settings.base.json` holds public-safe values. Private custom words, the cleanup prompt
 glossary and the post-processing provider live in `~/.config/handy-paul/settings.local.json`
-and are never committed; `settings.local.example.json` shows the format. The API key is read
-from a command at apply time and lands only in Handy's own settings store, never in either
-overlay file.
+and are never committed; `settings.overlay.example.json` shows the format. The API key is read
+from a command at apply time and is never written to an overlay file. It lands in Handy's
+settings store and in the timestamped `settings_store.json.bak-*` backups the script leaves
+beside it.
 
-| Hotkey             | Action                                                                |
-| ------------------ | --------------------------------------------------------------------- |
-| Option+Space       | Dictate locally. Hold to talk, or tap to start and tap again to stop. |
-| Option+Shift+Space | Dictate, then clean up the text through the post-processing provider. |
-| Escape             | Cancel the recording.                                                 |
+| Hotkey             | Action                                                                                                                          |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| Option+Space       | Dictate locally. Hold to talk, or tap to start and tap again to stop.                                                           |
+| Option+Shift+Space | Dictate, then clean up the text through the post-processing provider. Active only when the overlay sets `post_process_enabled`. |
+| Escape             | Cancel the recording.                                                                                                           |
 
 Dictation pastes with Cmd+V and never presses Enter.
